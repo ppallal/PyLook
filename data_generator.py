@@ -52,6 +52,16 @@ class DataGenerator:
             pickle.dump(n_lbl, f)
 
     @staticmethod
+    def load():
+        with open('data/n_data.pickle', 'rb') as f:
+            n_data = pickle.load(f)
+
+        with open('data/n_lbl.pickle', 'rb') as f:
+            n_lbl = pickle.load(f)
+
+        return n_data, n_lbl
+
+    @staticmethod
     def extract(frame, label=""):
         frame_x_res = DataGenerator.frame_x_res
         frame_y_res = DataGenerator.frame_y_res
