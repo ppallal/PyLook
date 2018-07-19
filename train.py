@@ -23,6 +23,8 @@ class Trainer:
         self.batch_size = 10
 
         self.net = net
+        if config['cuda']:
+            self.net = self.net.cuda()
 
         self.n_data, self.n_lbl = DataGenerator.load()
         self.FILT = list(range(len(self.n_lbl)))
