@@ -1,4 +1,4 @@
-#Gestures
+## Gestures
 
 A range of gestures can be defined to interact with the machine.
 All of them are based on head movements because: 

@@ -17,6 +17,9 @@ Usage can be turned on when the conditions are appropriate by
 
 The most natural action of the head movement must be paired with the action on the object of interest (OI).
 
+1. [Gestures](documentation/gestures.md)
+2. [Triangulation](documentation/triangulation.md)
+
 ## Roadmap
 
 Phase 1:
@@ -36,7 +39,6 @@ Phase 5:
 
 Phase 6:
     Write Middleware for each operating system to broadcast objects of interests.
-    
 
     
 _Forgive me for my bad english. This is just a first draft. My english appears better after I iterate over 3-4 times._ 
