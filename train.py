@@ -22,6 +22,8 @@ class Trainer:
         self.criterion = torch.nn.MSELoss()
         self.batch_size = 10
 
+        self.net = net
+
         self.n_data, self.n_lbl = DataGenerator.load()
         self.FILT = list(range(len(self.n_lbl)))
 
@@ -51,7 +53,7 @@ class Trainer:
 
             loss = self.criterion(Y, L)
             l = loss.cpu() if config['cuda'] else loss
-            losses.append(l.data.numpy()[0])
+            losses.append(l.data.numpy())
 
             loss.backward()
             self.optimizer.step()
@@ -60,5 +62,5 @@ class Trainer:
 
 if __name__ == '__main__':
     losses = Trainer(100).train()
-    pd.Series(losses).plot()
+    pd.Series(losses).astype(float).plot()
     plt.show()
