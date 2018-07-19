@@ -49,7 +49,7 @@ class Trainer:
             self.optimizer.zero_grad()
 
             X, L = self.create_batch()
-            Y = net(X)
+            Y = self.net(X)
 
             loss = self.criterion(Y, L)
             l = loss.cpu() if config['cuda'] else loss
