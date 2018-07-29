@@ -20,7 +20,7 @@ class Trainer:
     def __init__(self, batches=1000, lr=0.01):
         self.optimizer = optim.SGD(net.parameters(), lr=lr)
         self.criterion = torch.nn.MSELoss()
-        self.batch_size = 2
+        self.batch_size = 8
 
         self.net = net
         if config['cuda']:
@@ -35,14 +35,19 @@ class Trainer:
     def create_batch(self):
         sample = random.sample(self.FILT, self.batch_size)
         t = self.n_data[sample]
-        t = np.array(list(zip(*t))[2]) / 255
+        t = list(zip(*t))
+        frame, face, eye = np.array(t[0]) / 255, np.array(t[1]) / 255, np.array(t[2]) / 255
         # in your training loop:
-        X = torch.Tensor(t.reshape(self.batch_size, 1, self.n_data[0][1].shape[0], -1))
+        frame = torch.Tensor(frame.reshape(self.batch_size, 1, frame[0].shape[1], -1))
+        face = torch.Tensor(face.reshape(self.batch_size, 1, face[0].shape[1], -1))
+        eye = torch.Tensor(eye.reshape(self.batch_size, 1, eye[0].shape[1], -1))
+
         L = torch.Tensor(self.n_lbl[sample])
         if config['cuda']:
-            X, L = X.cuda(), L.cuda()
-        X, L = torch.autograd.Variable(X, requires_grad=True), torch.autograd.Variable(L, requires_grad=False)
-        return X, L
+            frame, face, eye, L = frame.cuda(), face.cuda(), eye.cuda(), L.cuda()
+        frame, face, eye = [torch.autograd.Variable(tmp, requires_grad=True) for tmp in [frame, face, eye]]
+        L = torch.autograd.Variable(L, requires_grad=False)
+        return (frame, face, eye), L
 
     # @profile
     def train(self):
@@ -51,7 +56,7 @@ class Trainer:
             self.optimizer.zero_grad()
 
             X, L = self.create_batch()
-            Y = self.net(X)
+            Y = self.net(*X)
 
             loss = self.criterion(Y, L)
             l = loss.cpu() if config['cuda'] else loss
