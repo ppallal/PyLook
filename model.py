@@ -27,13 +27,13 @@ class Net(nn.Module):
         self.out = nn.Sequential(
             nn.Linear(int(16 * d), 200),
             nn.LeakyReLU(0.1, inplace=True),
-            nn.Dropout(0.5, inplace=True),
+            nn.Dropout(0.5),
             nn.Linear(200, 120),
             nn.LeakyReLU(0.1, inplace=True),
-            nn.Dropout(0.5, inplace=True),
+            nn.Dropout(0.5),
             nn.Linear(120, 84),
             nn.LeakyReLU(0.1, inplace=True),
-            nn.Dropout(0.5, inplace=True),
+            nn.Dropout(0.5),
             nn.Linear(84, 2)
         )
         self.init_weights()
@@ -47,7 +47,6 @@ class Net(nn.Module):
         # torch.nn.init.xavier_uniform(self.fc2.weight)
         # torch.nn.init.xavier_uniform(self.fc3.weight)
 
-
     def forward(self, frame, face, eye):
         frame = F.max_pool2d(F.relu(self.conv_frame_1(frame)), (2, 2))
         frame = F.max_pool2d(F.relu(self.conv_frame_2(frame)), 2)
@@ -58,9 +57,7 @@ class Net(nn.Module):
         eye = F.max_pool2d(F.relu(self.conv_eye_1(eye)), (2, 2))
         eye = F.max_pool2d(F.relu(self.conv_eye_2(eye)), 2)
 
-        # print(frame.size(), face.size(), [tmp.view(-1, self.num_flat_features(tmp)) for tmp in [frame, eye, face]][0].size())
         x = torch.cat([tmp.view(-1, self.num_flat_features(tmp)) for tmp in [frame, eye, face]], dim=1)
-        # x = x.view(-1, self.num_flat_features(x))
         x = self.out(x)
         return x
 
