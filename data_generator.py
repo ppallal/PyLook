@@ -6,6 +6,12 @@ import numpy as np
 import random
 import time
 import pickle
+from zipfile import ZipFile
+
+import win32gui
+import win32api
+import glob
+import sys
 
 scrx = config['screen_resolution']['x']
 scry = config['screen_resolution']['y']
@@ -20,6 +26,8 @@ class DataGenerator:
 
     frame_x_res = 100
     frame_y_res = 75
+
+    frame_save_res = 32
 
     eye_resolution_multiplier = 3
     face_res = 64
@@ -73,8 +81,11 @@ class DataGenerator:
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
         if len(faces) > 1:
-            return False
+            return []
         rvals = []
+        full = cv2.resize(gray_scheme, (DataGenerator.frame_save_res, DataGenerator.frame_save_res))
+        rvals.append(full)
+
         for (x, y, w, h) in faces:
             roi_gray = gray_big[eye_resolution_multiplier * y:eye_resolution_multiplier * (y + h), eye_resolution_multiplier * x:eye_resolution_multiplier * (x + w)]
             fac = gray[y:(y + h), x:(x + w)]
@@ -156,7 +167,7 @@ class DataGenerator:
 
                 dat = DataGenerator.extract(frame)
 
-                if len(dat) < 2:
+                if len(dat) < 3:
                     continue
                 data.append(dat)
                 labels.append((x / scrx, y / scry))
@@ -168,5 +179,76 @@ class DataGenerator:
         return data, labels
 
 
+class DataGenerator2(DataGenerator):
+
+    def __init__(self):
+        generate = self.generate()
+        if not os.path.exists('data'):
+            os.mkdir('data')
+
+        for d, t in generate:
+            with open('data/instance_%f.pickle' % t, 'wb') as f:
+                pickle.dump(d, f)
+
+    @staticmethod
+    def load():
+        files = glob.glob("data/instance_*.pickle")
+        data = []
+        lbls = []
+        for fn in files:
+            with open(fn, 'rb') as f:
+                dat = pickle.load(f)
+                data.append(dat['data'])
+                lbls.append(dat['lbl'])
+        n_data = np.array(data)
+        n_lbls = np.array(lbls)
+        return n_data, n_lbls
+
+    @staticmethod
+    def generate():
+        cap = cv2.VideoCapture(0)
+        state_left = win32api.GetKeyState(0x01)  # Left button down = 0 or 1. Button up = -127 or -128
+        while True:
+            a = win32api.GetKeyState(0x01)
+            if a != state_left:  # Button state changed
+                state_left = a
+                flags, hcursor, (x, y) = win32gui.GetCursorInfo()
+                dat, lbl, t = DataGenerator2.onclick(x, y, cap)
+                if len(dat) < 3:
+                    continue
+                yield {"data": dat, "lbl": lbl}, t
+            time.sleep(0.001)
+
+    @staticmethod
+    def onclick(x, y, cap):
+        x, y = x / scrx, y / scry
+        t = time.time()
+        ret, frame = cap.read()
+        dat = DataGenerator2.extract(frame)
+        return dat, (x, y), t
+
+    @staticmethod
+    def delete():
+        files = glob.glob("data/instance_*.pickle")
+        for fn in files:
+            os.remove(fn)
+
+    @staticmethod
+    def package():
+        try:
+            files = glob.glob('data/data_*.zip')
+            cnt = int(sorted(files)[-1].split("_")[1].split('.')[0])
+            cnt += 1
+        except:
+            cnt = 1
+        files = glob.glob("data/instance_*.pickle")
+        with ZipFile('data/data_%d.zip' % cnt, 'w') as myzip:
+            for fn in files:
+                myzip.write(fn)
+
+
 if __name__ == '__main__':
-    DataGenerator().save()
+    if len(sys.argv) > 1 and sys.argv[1] == 'package':
+        DataGenerator2.package()
+    else:
+        DataGenerator2()

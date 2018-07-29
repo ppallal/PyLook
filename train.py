@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from load import config
-from data_generator import DataGenerator
+from data_generator import DataGenerator, DataGenerator2
 from model import net
 
 import torch.optim as optim
@@ -20,13 +20,13 @@ class Trainer:
     def __init__(self, batches=1000, lr=0.01):
         self.optimizer = optim.SGD(net.parameters(), lr=lr)
         self.criterion = torch.nn.MSELoss()
-        self.batch_size = 10
+        self.batch_size = 2
 
         self.net = net
         if config['cuda']:
             self.net = self.net.cuda()
 
-        self.n_data, self.n_lbl = DataGenerator.load()
+        self.n_data, self.n_lbl = DataGenerator2.load()
         self.FILT = list(range(len(self.n_lbl)))
 
         self.batches = batches
@@ -35,7 +35,7 @@ class Trainer:
     def create_batch(self):
         sample = random.sample(self.FILT, self.batch_size)
         t = self.n_data[sample]
-        t = np.array(list(zip(*t))[1]) / 255
+        t = np.array(list(zip(*t))[2]) / 255
         # in your training loop:
         X = torch.Tensor(t.reshape(self.batch_size, 1, self.n_data[0][1].shape[0], -1))
         L = torch.Tensor(self.n_lbl[sample])
