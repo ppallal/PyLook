@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -50,8 +52,9 @@ class Trainer:
         return (frame, face, eye), L
 
     # @profile
-    def train(self):
+    def train(self, ax=None, overall_ax=None, refresh_rate=24):
         losses = []
+        t = time.time()
         for _ in tqdm(range(self.batches)):
             self.optimizer.zero_grad()
 
@@ -61,6 +64,15 @@ class Trainer:
             loss = self.criterion(Y, L)
             l = loss.cpu() if config['cuda'] else loss
             losses.append(l.data.numpy())
+
+            if time.time() - t > 1/refresh_rate:
+                if ax is not None:
+                    ax.clear()
+                    ax.plot(pd.Series(losses[-1000:]).ewm(50).mean())
+                if overall_ax is not None:
+                    overall_ax.clear()
+                    overall_ax.plot(pd.Series(losses).ewm(50).mean())
+                t = time.time()
 
             loss.backward()
             self.optimizer.step()
